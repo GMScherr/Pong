@@ -7,12 +7,8 @@
 //Defines screen size 
 #define sizex 500
 #define sizey 500
-//Game state flag, the mother of all "magic numbers". Changes game behaviour depending on the flag. 0 = Game, 1 = Pause , 2 = Main Menu , 3 = Credits
-int gamestate = 2;
-//Background flag.
-int backgroundstate = 1;
-//Ball flag.
-int ballstate = 0;
+//Game state flag, the mother of all "magic numbers". Changes game behaviour depending on the flag. 0 = Game, 1 = Pause
+int gamestate = 0;
 //Ball position
 int ballx = 0;
 int bally = 0;
@@ -29,26 +25,11 @@ int bar1y = 500;
 //Bottom player cursor position
 int bar2x = 0;
 int bar2y = -490;
-//Left player cursor position
-int bar3x = -350;
-int bar3y = 0;
-//Right player cursor position
-int bar4x = 340;
-int bar4y = 0;
-//Top player score
-int score1 = 0;
-//Bottom player score
-int score2 = 0;
 //Global keyboard vector
 int keyboard [127];
-//Texture IDs. I've no idea how to work with textures, so this is mostly copied from the teacher's example code. The texture loader is a carbon copy, in fact. Our characters have very simple animations, so each frame is saved individually. Wasteful, I know.
-GLuint idRanBall;
-GLuint idRanSlide;
-GLuint idRanNeutral;
-GLuint idRanStart;
+//Texture IDs. I've no idea how to work with textures, so this is mostly copied from the teacher's example code. The texture loader is a carbon copy, in fact.
+GLuint idTest;
 GLuint idBackPhantasm;
-GLuint idMenu01;
-GLuint idCredits;
 
 GLuint loadtexture (const char* file){
 	GLuint texture = SOIL_load_OGL_texture(
@@ -70,26 +51,14 @@ void setup(){
 	for (int i = 0;i<127;i++)//Initializes all keyboard positions as 0s. Helps against garbage memory screwing up the program.
 		keyboard[i]=0;
 	//Where all textures are loaded. Is it supposed to be done like this ? God knows.
-	//Menu elements
-	idMenu01 = loadtexture("MenuPlaceholder.png");
-	idCredits = loadtexture("CreditsPlaceholder.png");
-	//Ball 1 : Yakumo Ran
-	idRanStart = loadtexture("Sprites1.png");
-	idRanSlide = loadtexture("Sprites2.png");
-	idRanBall = loadtexture("Sprites3.png");
-	idRanNeutral = loadtexture("Sprites4.png");
-	//Stage Backgrounds
-	idBackPhantasm = loadtexture("BackFinal1.png");
+	idTest = loadtexture("mario.png");
+	idBackPhantasm = loadtexture("back1.png");
 }
 
 void drawbackground(){
 	glColor3f(1,1,1);
 	glEnable(GL_TEXTURE_2D);
-	switch (backgroundstate){ //Selects proper background texture depending on the gamemode
-		case 0 : glBindTexture(GL_TEXTURE_2D,idBackPhantasm);break;
-		case 1 : glBindTexture(GL_TEXTURE_2D,idMenu01);break;
-		case 2 : glBindTexture(GL_TEXTURE_2D,idCredits);break;
-	}
+	glBindTexture(GL_TEXTURE_2D,idBackPhantasm);
 	glBegin(GL_POLYGON);
 		glTexCoord2f(0,0);
 		glVertex2f(-350,-500);
@@ -116,25 +85,15 @@ void drawbar(int x,int y){
 	glEnd();
 }
 
-void drawbarvert(int x, int y){
-	glColor3f (1,1,1);
-	glBegin(GL_POLYGON);
-		glVertex2f(x,y-70);
-		glVertex2f(x+10,y-70);
-		glVertex2f(x+10,y+70);
-		glVertex2f(x,y+70);
-	glEnd();
-}
-
 void drawball(){
 	glColor3f(1,1,1);
 	glEnable(GL_TEXTURE_2D);
-	glBindTexture(GL_TEXTURE_2D, idRanBall);
-	if ((gamestate == 0)||(gamestate==4)){//Draws the ball when the gamestate = 0 (Gameplay)
+	glBindTexture(GL_TEXTURE_2D, idTest);
+	if (gamestate == 0){//Draws the ball when the gamestate = 0 (Gameplay)
 		glPushMatrix();
 			glTranslatef(ballx,bally,0);
 			glRotatef(ballrotateangle,0,0,1);
-			ballrotateangle = ballrotateangle + 30;
+			ballrotateangle = ballrotateangle + 20;
 			if (ballrotateangle>360)
 				ballrotateangle = ballrotateangle - 360;
 			glBegin(GL_POLYGON);
@@ -152,7 +111,7 @@ void drawball(){
 			glEnd();
 			glPopMatrix();
 		}
-	if ((gamestate == 0)||(gamestate==4)||(gamestate==1)){//Same as above but for gamestate = 1 (Paused). The difference is that the ball's rotation speed isn't updated here, meaning the ball maintains its angle when the game is paused
+	if (gamestate == 1){//Same as above but for gamestate = 1 (Paused). The difference is that the ball's rotation speed isn't updated here, meaning the ball maintains its angle when the game is paused
 		glPushMatrix();
 			glTranslatef(ballx,bally,0);
 			glRotatef(ballrotateangle,0,0,1);
@@ -181,12 +140,9 @@ void resetball (){
 }
 
 void gameloop(int valor){
-	//Menus
+
 	if(keyboard[27]){
 		switch(gamestate){
-			case 4:
-				gamestate = 1;
-				break;
 			case 0:
 				gamestate = 1;//Changes gamestate to 1 (Paused state) when ESC is pressed
 				break;
@@ -200,32 +156,7 @@ void gameloop(int valor){
 	if ((gamestate==1)&&(keyboard[120]))//Exits game when the game is paused and the x key is pressed
 		exit(0);
 
-	if (gamestate==1)
-		if(keyboard[100]){
-			gamestate = 2;
-			backgroundstate = 1;
-		}
-
-	if (gamestate==2){
-		drawbackground();
-		if (keyboard[122]){//Key that plays the game
-			gamestate = 0;
-			backgroundstate = 0;}
-		if (keyboard[120]){//Key that leads to the credits screen.
-			gamestate = 3;
-			backgroundstate = 2;}
-		if (keyboard[99])//Key to exit from the menu.
-			exit(0);
-	}
-
-	if (gamestate==3)
-		if (keyboard[122]){
-			gamestate = 2;
-			backgroundstate = 1;
-		}
-
-	//Game logic
-	if ((gamestate==0)||(gamestate==4)){
+	if (gamestate==0){
 		if (keyboard[111]==1)//Moves the player's cursors
 			bar1x = bar1x -10;
 		if (keyboard[112]==1)
@@ -234,27 +165,14 @@ void gameloop(int valor){
 			bar2x = bar2x -10;
 		if (keyboard[119]==1)
 			bar2x = bar2x +10;
-
-		if (gamestate==4){
-			if (keyboard[109]==1)//Moves the player's cursors
-				bar4y = bar4y -10;
-			if (keyboard[107]==1)
-				bar4y = bar4y +10;
-			if (keyboard[122]==1)
-				bar3y = bar3y -10;
-			if (keyboard[97]==1)
-				bar3y = bar3y +10;
-		}
 		
 		ballx = ballx + ballspeedx*ballspeedmod;//Moves the ball in the x axis
 		bally = bally + ballspeedy*ballspeedmod;//Moves the ball in the y axis
 		//All logic below here is based off of them juicy magical numbers because it was made on prototype phase. Alas, I am too lazy to change the code so please don't change the window size.
-		if (gamestate == 0){
-			if (ballx>sizex-180)//Reflects the ball off the sides
-				ballspeedx = -1;
-			if (ballx<-sizex+180)
-				ballspeedx = 1;
-		}
+		if (ballx>sizex-180)//Reflects the ball off the sides
+			ballspeedx = -1;
+		if (ballx<-sizex+180)
+			ballspeedx = 1;
 
 		if(bar1x<-280)//Limits the movement of the player's cursors to stay within the screen
 			bar1x=-280;
@@ -264,15 +182,6 @@ void gameloop(int valor){
 			bar2x=-280;
 		if(bar2x>280)
 			bar2x=280;
-
-		if(bar3y>430)
-			bar3y = 430;
-		if(bar3y<-430)
-			bar3y = -430;
-		if(bar4y>430)
-			bar4y = 430;
-		if(bar4y<-430)
-			bar4y = -430;
 
 		if(ballspeedy==1){
 			if((bally>=480)&&(bally<=500)&&((ballx>bar1x-90)&&(ballx<bar1x+90))){//Reflects the ball if it hits the top bar
@@ -286,50 +195,9 @@ void gameloop(int valor){
 				ballspeedmod = ballspeedmod*1.05;
 			}
 		}
-
-		if(gamestate==4){
-			if (ballspeedx==1){
-				if((ballx>=340)&&(ballx<=350)&&((bally>bar4y-90)&&(bally<bar4y+90))){
-					ballspeedx = -1;
-					ballspeedmod = ballspeedmod*1.05;
-				}
-			}
-			else{
-				if((ballx<=-340)&&(ballx>=-350)&&((bally>bar3y-90)&&(bally<bar3y+90))){
-					ballspeedx = 1;
-					ballspeedmod = ballspeedmod*1.05;
-				}
-			}
-
-		}
-
-		if (bally>500){//Increases the score
-			score2++;
+		if (bally>500||bally<-500)
 			resetball();
-		}
-		if (bally<-500){
-			score1++;
-			resetball();
-		}
-		if (gamestate==4){
-			if(ballx>370){
-				score1++;
-				resetball();
-			}
-			if(ballx<-370){
-				score2++;
-				resetball();
-			}
-		}
-		if((score1>=2)||(score2>=2)){
-			gamestate = 4;
-			score1 = 0;
-			score2 = score1;
-			resetball();
-		}
-		}
-			
-	
+	}
 	
 	glutPostRedisplay();
 	glutTimerFunc(33,gameloop,0);
@@ -360,16 +228,6 @@ void drawscene(){
 			drawball();
 			drawbar(bar1x,bar1y);
 			drawbar(bar2x,bar2y);
-		}break;
-		case 2 : drawbackground();break;
-		case 3 : drawbackground();break;
-		case 4 : {
-			drawbackground();
-			drawball();
-			drawbar(bar1x,bar1y);
-			drawbar(bar2x,bar2y);
-			drawbarvert(bar3x,bar3y);
-			drawbarvert(bar4x,bar4y);
 		}break;
 	}
 
